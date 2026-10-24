@@ -1,0 +1,1783 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sportbad Mannheim – Hallenbad Seckenheim retten</title>
+    <meta
+      name="description"
+      content="Prototyp für den gemeinnützigen Verein Sportbad Mannheim zur Übernahme und Rettung des Hallenbads Seckenheim."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #eef4f8;
+        --surface: #ffffff;
+        --surface-glass: rgba(255, 255, 255, 0.88);
+        --text: #12314a;
+        --muted: #4f6a7f;
+        --line: #c9d9e5;
+        --accent: #006fb6;
+        --accent-dark: #014f82;
+        --ink: #0c2233;
+        --focus: #0f7fc5;
+        --header-offset: 5.5rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: var(--header-offset);
+      }
+
+      body {
+        margin: 0;
+        font-family: "Public Sans", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: #084c7d;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* ==========================================================================
+         Feste Top-Down Scrollytelling-Bühne (Vogelperspektive auf 5 Bahnen)
+         ========================================================================== */
+      .pool-stage {
+        position: fixed;
+        top: var(--header-offset);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .pool-svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* Dezentes HUD für Bahn-Fortschritt (25-Meter-Becken) */
+      .swim-hud {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.1rem;
+        z-index: 25;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        background: rgba(8, 28, 44, 0.84);
+        border: 1px solid rgba(140, 205, 245, 0.4);
+        color: #f0f8ff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 24px rgba(6, 22, 36, 0.28);
+      }
+
+      .swim-hud-phase {
+        color: #9be0ff;
+        white-space: nowrap;
+      }
+
+      .swim-hud-track {
+        width: 4.5rem;
+        height: 0.38rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+      }
+
+      .swim-hud-bar {
+        display: block;
+        width: 0%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #4ad4ff, #f7c948);
+      }
+
+      .swim-hud-distance {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      /* ==========================================================================
+         Kopfzeile & Navigation
+         ========================================================================== */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 1rem;
+        background: rgba(255, 255, 255, 0.92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+
+      .brand {
+        text-decoration: none;
+        color: var(--ink);
+        font-weight: 800;
+        font-size: 1.05rem;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .brand img {
+        display: block;
+        width: 11.8rem;
+        max-width: 100%;
+        height: auto;
+      }
+
+      .brand-fallback {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--ink);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-fallback::before {
+        content: "";
+        display: inline-block;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #0088d6, #014f82);
+      }
+
+      nav ul {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      nav ul::-webkit-scrollbar {
+        display: none;
+      }
+
+      nav a {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        text-decoration: none;
+        color: var(--text);
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        line-height: 1;
+        min-height: 2rem;
+        transition:
+          background-color 0.25s ease,
+          color 0.25s ease;
+      }
+
+      nav a:hover,
+      nav a:focus-visible {
+        background: #e8f3fa;
+      }
+
+      nav a.is-active {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      a:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      /* ==========================================================================
+         Hauptbereich & Story-Cards (.section)
+         ========================================================================== */
+      main {
+        position: relative;
+        z-index: 5;
+        max-width: 73rem;
+        margin: 0 auto;
+        padding: 13.5rem 1rem 4rem;
+      }
+
+      main[id],
+      section[id] {
+        scroll-margin-top: var(--header-offset);
+      }
+
+      .section {
+        background: var(--surface-glass);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        border-radius: 1.25rem;
+        padding: 1.75rem 1.25rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow:
+          0 22px 54px rgba(4, 24, 42, 0.28),
+          0 1px 0 rgba(255, 255, 255, 0.85) inset;
+        will-change: transform, opacity;
+      }
+
+      .hero {
+        background:
+          linear-gradient(132deg, rgba(0, 111, 182, 0.12), rgba(255, 255, 255, 0.6) 52%),
+          var(--surface-glass);
+        border-color: #b7d1e2;
+      }
+
+      .hero-meta {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+        margin-top: 0;
+        font-family: "Source Serif 4", Georgia, serif;
+        color: var(--ink);
+      }
+
+      h1 {
+        margin: 0.55rem 0 0.9rem;
+        font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+        max-width: 24ch;
+      }
+
+      h2 {
+        font-size: clamp(1.4rem, 2.6vw, 2rem);
+        margin-bottom: 0.85rem;
+      }
+
+      h3 {
+        font-size: 1.12rem;
+        margin-bottom: 0.45rem;
+      }
+
+      h4 {
+        margin: 0.25rem 0 0.2rem;
+        font-size: 1rem;
+        color: var(--ink);
+      }
+
+      p {
+        max-width: 68ch;
+        margin: 0 0 0.75rem;
+      }
+
+      .cta {
+        display: inline-block;
+        margin-top: 0.55rem;
+        padding: 0.72rem 1.15rem;
+        background: linear-gradient(120deg, var(--accent), var(--accent-dark));
+        color: #fff;
+        text-decoration: none;
+        border-radius: 0.7rem;
+        font-weight: 700;
+        box-shadow: 0 6px 18px rgba(0, 111, 182, 0.28);
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .cta:hover,
+      .cta:focus-visible {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+      }
+
+      .grid {
+        display: grid;
+        gap: 0.85rem;
+      }
+
+      .grid article,
+      .member-card {
+        border: 1px solid var(--line);
+        border-radius: 0.85rem;
+        padding: 0.95rem;
+        background: rgba(248, 251, 254, 0.92);
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-facts {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0.2rem;
+      }
+
+      .hero-facts li {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 0.8rem;
+        background: rgba(247, 251, 255, 0.94);
+      }
+
+      .hero-facts strong {
+        font-size: 1.35rem;
+        color: var(--accent-dark);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .hero-facts span {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .phase .meta {
+        margin-top: 0.5rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .timeline {
+        margin-top: 0.85rem;
+        padding: 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 0.85rem;
+        background: rgba(241, 247, 252, 0.94);
+      }
+
+      ul {
+        margin: 0.2rem 0 0.2rem;
+        padding-left: 1.2rem;
+      }
+
+      li + li {
+        margin-top: 0.35rem;
+      }
+
+      .plan-note {
+        margin-top: 0.8rem;
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .finance {
+        background:
+          linear-gradient(160deg, rgba(0, 111, 182, 0.1), rgba(255, 255, 255, 0.55) 44%),
+          var(--surface-glass);
+      }
+
+      .finance-grid p strong {
+        display: inline-block;
+        min-width: 7ch;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .funding-bar {
+        margin-top: 0.95rem;
+        height: 1rem;
+        border-radius: 999px;
+        background: #d9e7f1;
+        overflow: hidden;
+        box-shadow: inset 0 1px 3px rgba(12, 34, 51, 0.12);
+      }
+
+      .funding-secured {
+        display: block;
+        height: 100%;
+        width: 67%;
+        border-radius: 999px;
+        background: linear-gradient(100deg, #1990d1, #0b639f);
+      }
+
+      .funding-legend {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin-top: 0.55rem;
+        margin-bottom: 0;
+      }
+
+      .funding-percent {
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+      }
+
+      ol {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      ol li + li {
+        margin-top: 1rem;
+      }
+
+      .members {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: 1fr;
+      }
+
+      .avatar {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 999px;
+        margin-bottom: 0.45rem;
+        border: 1px dashed #86aac2;
+        background: radial-gradient(
+          circle at 50% 38%,
+          #e6f1f9 20%,
+          #d4e5f2 20% 44%,
+          #bfd6e8 44% 100%
+        );
+      }
+
+      .member-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .support {
+        background:
+          linear-gradient(160deg, rgba(0, 111, 182, 0.1), rgba(255, 255, 255, 0.65) 50%),
+          rgba(237, 246, 253, 0.9);
+      }
+
+      .notice {
+        margin-top: 0.85rem;
+        padding: 0.8rem;
+        border-left: 4px solid var(--accent);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 0.55rem;
+        color: var(--muted);
+      }
+
+      /* ==========================================================================
+         Responsive Breakpoints & Scrollytelling-Anpassung
+         ========================================================================== */
+      @media (max-width: 767px) {
+        .swim-hud-phase {
+          display: none;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .topbar {
+          padding: 0.86rem 1.5rem;
+        }
+
+        main {
+          padding: 15.5rem 1.3rem 5rem;
+        }
+
+        .section {
+          padding: 2rem 2.2rem;
+        }
+
+        .grid-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-3 {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .hero-facts {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .members {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 768px) and (min-height: 620px) {
+        html.js-scrollytelling .section {
+          max-height: calc(100vh - var(--header-offset) - 8.5rem);
+          overflow-y: auto;
+          scrollbar-width: thin;
+        }
+      }
+
+      @media (min-width: 1100px) {
+        .members {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+
+      /* ==========================================================================
+         Barrierefreiheit: Fallback bei prefers-reduced-motion: reduce
+         ========================================================================== */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .section {
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: none !important;
+          margin-bottom: 1.25rem !important;
+        }
+
+        .swim-hud {
+          display: none;
+        }
+
+        #swimmer-rig {
+          transform: translate(960px, 520px) scale(0.95) !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Feste Top-Down Scrollytelling-Bühne (Vogelperspektive auf das 5-Bahnen-Becken) -->
+    <div class="pool-stage" aria-hidden="true">
+      <svg
+        class="pool-svg"
+        viewBox="0 0 1920 1080"
+        preserveAspectRatio="xMidYMin slice"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <!-- Unterwasser-Kachelgitter (Draufsicht) -->
+          <pattern id="pool-tiles-top" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path
+              d="M 60 0 L 0 0 0 60"
+              fill="none"
+              stroke="#68c5f8"
+              stroke-width="1"
+              stroke-opacity="0.22"
+            />
+          </pattern>
+
+          <!-- Beckenumgang Fliesen-Punktmuster -->
+          <pattern id="deck-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+            <circle cx="12" cy="12" r="1.4" fill="#9eb8cc" opacity="0.6" />
+          </pattern>
+
+          <!-- Schwimmer-Leinen (Wellenbrecher-Schwimmer in Rot/Weiß/Blau) -->
+          <pattern id="lane-rope-red" width="12" height="36" patternUnits="userSpaceOnUse">
+            <line x1="6" y1="0" x2="6" y2="36" stroke="#08253a" stroke-width="2" />
+            <rect x="1" y="2" width="10" height="14" rx="4" fill="#e03e3e" />
+            <rect x="1" y="19" width="10" height="14" rx="4" fill="#f4f9fc" />
+          </pattern>
+
+          <pattern id="lane-rope-blue" width="12" height="36" patternUnits="userSpaceOnUse">
+            <line x1="6" y1="0" x2="6" y2="36" stroke="#08253a" stroke-width="2" />
+            <rect x="1" y="2" width="10" height="14" rx="4" fill="#0077c2" />
+            <rect x="1" y="19" width="10" height="14" rx="4" fill="#f4f9fc" />
+          </pattern>
+
+          <!-- Wasser-Farbverlauf (Draufsicht mit leichter Tiefenvignette an den Rändern) -->
+          <radialGradient id="water-topdown-grad" cx="50%" cy="50%" r="65%">
+            <stop offset="0%" stop-color="#1187d4" />
+            <stop offset="65%" stop-color="#0b629e" />
+            <stop offset="100%" stop-color="#073d66" />
+          </radialGradient>
+
+          <!-- Diagonale Sonnenlicht-Reflexe auf der Wasseroberfläche -->
+          <linearGradient id="caustic-band" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#9be4ff" stop-opacity="0" />
+            <stop offset="50%" stop-color="#9be4ff" stop-opacity="0.16" />
+            <stop offset="100%" stop-color="#9be4ff" stop-opacity="0" />
+          </linearGradient>
+
+          <!-- Badeanzug-Verlauf -->
+          <linearGradient id="suit-grad-top" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#004d82" />
+            <stop offset="100%" stop-color="#0088d6" />
+          </linearGradient>
+
+          <!-- Weicher Unterwasser-Schatten des Schwimmers auf dem Beckenboden -->
+          <filter id="swimmer-shadow-blur" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="8" />
+          </filter>
+        </defs>
+
+        <!-- 1. Beckenumgang (Links, Rechts, Oben, Unten) -->
+        <rect x="0" y="0" width="1920" height="1080" fill="#e5eff6" />
+        <rect x="0" y="0" width="1920" height="1080" fill="url(#deck-dots)" />
+
+        <!-- Überlaufrinne (Finnische Rinne rund um das Becken) -->
+        <rect
+          x="196"
+          y="78"
+          width="1528"
+          height="924"
+          rx="8"
+          fill="#b8cde0"
+          stroke="#8eabc4"
+          stroke-width="2"
+        />
+
+        <!-- 2. Das 25m Schwimmbecken (5 Bahnen à 280px Breite: x = 260 bis 1660) -->
+        <g id="pool-basin">
+          <rect
+            x="220"
+            y="100"
+            width="1480"
+            height="880"
+            rx="4"
+            fill="url(#water-topdown-grad)"
+            stroke="#062b47"
+            stroke-width="4"
+          />
+
+          <!-- Kachelgitter am Beckenboden (leichtes Parallax beim Scrollen) -->
+          <g id="pool-floor-content">
+            <rect
+              id="pool-tile-grid"
+              x="220"
+              y="40"
+              width="1480"
+              height="1000"
+              fill="url(#pool-tiles-top)"
+            />
+
+            <!-- 5 Schwarze Boden-Leitlinien (T-Linien in der Mitte jeder Bahn) -->
+            <!-- Bahn 1 (x=400), Bahn 2 (x=680), Bahn 3 (x=960), Bahn 4 (x=1240), Bahn 5 (x=1520) -->
+            <g id="floor-t-lines" stroke="#04192b" stroke-width="14" opacity="0.78">
+              <!-- Bahn 1 -->
+              <line x1="400" y1="175" x2="400" y2="905" />
+              <line x1="364" y1="175" x2="436" y2="175" />
+              <line x1="364" y1="905" x2="436" y2="905" />
+              <!-- Bahn 2 -->
+              <line x1="680" y1="175" x2="680" y2="905" />
+              <line x1="644" y1="175" x2="716" y2="175" />
+              <line x1="644" y1="905" x2="716" y2="905" />
+              <!-- Bahn 3 (Hauptbahn des Schwimmers) -->
+              <line x1="960" y1="175" x2="960" y2="905" />
+              <line x1="924" y1="175" x2="996" y2="175" />
+              <line x1="924" y1="905" x2="996" y2="905" />
+              <!-- Bahn 4 -->
+              <line x1="1240" y1="175" x2="1240" y2="905" />
+              <line x1="1204" y1="175" x2="1276" y2="175" />
+              <line x1="1204" y1="905" x2="1276" y2="905" />
+              <!-- Bahn 5 -->
+              <line x1="1520" y1="175" x2="1520" y2="905" />
+              <line x1="1484" y1="175" x2="1556" y2="175" />
+              <line x1="1484" y1="905" x2="1556" y2="905" />
+            </g>
+          </g>
+
+          <!-- Diagonale Lichtbänder (Caustics) im Wasser -->
+          <g id="light-rays">
+            <polygon points="220,180 780,100 1320,980 620,980" fill="url(#caustic-band)" />
+            <polygon points="840,100 1420,100 1700,760 1240,980" fill="url(#caustic-band)" />
+            <polygon points="220,520 580,980 220,980" fill="url(#caustic-band)" />
+          </g>
+
+          <!-- 3. Wellenbrecher-Schwimmleinen (zwischen den 5 Bahnen) -->
+          <!-- Leinen bei x = 260, 540, 820, 1100, 1380, 1660 -->
+          <g id="lane-ropes">
+            <!-- Äußere Leine links (x=260) -->
+            <rect x="254" y="100" width="12" height="880" fill="url(#lane-rope-red)" />
+            <!-- Leine 1-2 (x=540) -->
+            <rect x="534" y="100" width="12" height="180" fill="url(#lane-rope-red)" />
+            <rect x="534" y="280" width="12" height="520" fill="url(#lane-rope-blue)" />
+            <rect x="534" y="800" width="12" height="180" fill="url(#lane-rope-red)" />
+            <!-- Leine 2-3 (x=820) -->
+            <rect x="814" y="100" width="12" height="180" fill="url(#lane-rope-red)" />
+            <rect x="814" y="280" width="12" height="520" fill="url(#lane-rope-blue)" />
+            <rect x="814" y="800" width="12" height="180" fill="url(#lane-rope-red)" />
+            <!-- Leine 3-4 (x=1100) -->
+            <rect x="1094" y="100" width="12" height="180" fill="url(#lane-rope-red)" />
+            <rect x="1094" y="280" width="12" height="520" fill="url(#lane-rope-blue)" />
+            <rect x="1094" y="800" width="12" height="180" fill="url(#lane-rope-red)" />
+            <!-- Leine 4-5 (x=1380) -->
+            <rect x="1374" y="100" width="12" height="180" fill="url(#lane-rope-red)" />
+            <rect x="1374" y="280" width="12" height="520" fill="url(#lane-rope-blue)" />
+            <rect x="1374" y="800" width="12" height="180" fill="url(#lane-rope-red)" />
+            <!-- Äußere Leine rechts (x=1660) -->
+            <rect x="1654" y="100" width="12" height="880" fill="url(#lane-rope-red)" />
+          </g>
+        </g>
+
+        <!-- 4. Obere Beckenwand mit 5 Startblöcken & Untere Zielwand mit Anschlagmatten -->
+        <g id="pool-walls-and-blocks">
+          <!-- Obere Beckenrandkante -->
+          <rect
+            x="210"
+            y="84"
+            width="1500"
+            height="20"
+            rx="3"
+            fill="#dce8f2"
+            stroke="#94b2c9"
+            stroke-width="2"
+          />
+
+          <!-- 5 Startblöcke (Draufsicht oben) -->
+          <!-- Bahn 1 Startblock -->
+          <g transform="translate(400, 74)">
+            <rect x="-34" y="-32" width="68" height="58" rx="6" fill="#1e4968" stroke="#0c2233" stroke-width="2" />
+            <rect x="-28" y="-26" width="56" height="44" rx="4" fill="#006fb6" />
+            <rect x="-22" y="-22" width="44" height="10" rx="2" fill="#0c2233" />
+            <text x="0" y="10" text-anchor="middle" fill="#ffffff" font-family="Public Sans, sans-serif" font-size="16" font-weight="800">1</text>
+          </g>
+
+          <!-- Bahn 2 Startblock -->
+          <g transform="translate(680, 74)">
+            <rect x="-34" y="-32" width="68" height="58" rx="6" fill="#1e4968" stroke="#0c2233" stroke-width="2" />
+            <rect x="-28" y="-26" width="56" height="44" rx="4" fill="#006fb6" />
+            <rect x="-22" y="-22" width="44" height="10" rx="2" fill="#0c2233" />
+            <text x="0" y="10" text-anchor="middle" fill="#ffffff" font-family="Public Sans, sans-serif" font-size="16" font-weight="800">2</text>
+          </g>
+
+          <!-- Bahn 3 Startblock (Haupt-Startblock für unseren Schwimmer) -->
+          <g id="main-startblock" transform="translate(960, 74)">
+            <rect x="-38" y="-36" width="76" height="64" rx="6" fill="#1e4968" stroke="#0c2233" stroke-width="2.5" />
+            <rect x="-32" y="-30" width="64" height="50" rx="4" fill="#0077c2" />
+            <!-- Verstellbarer Rückstoßkeil -->
+            <rect x="-24" y="-24" width="48" height="11" rx="2" fill="#0c2233" />
+            <text x="0" y="12" text-anchor="middle" fill="#ffffff" font-family="Public Sans, sans-serif" font-size="17" font-weight="800">3</text>
+          </g>
+
+          <!-- Bahn 4 Startblock -->
+          <g transform="translate(1240, 74)">
+            <rect x="-34" y="-32" width="68" height="58" rx="6" fill="#1e4968" stroke="#0c2233" stroke-width="2" />
+            <rect x="-28" y="-26" width="56" height="44" rx="4" fill="#006fb6" />
+            <rect x="-22" y="-22" width="44" height="10" rx="2" fill="#0c2233" />
+            <text x="0" y="10" text-anchor="middle" fill="#ffffff" font-family="Public Sans, sans-serif" font-size="16" font-weight="800">4</text>
+          </g>
+
+          <!-- Bahn 5 Startblock -->
+          <g transform="translate(1520, 74)">
+            <rect x="-34" y="-32" width="68" height="58" rx="6" fill="#1e4968" stroke="#0c2233" stroke-width="2" />
+            <rect x="-28" y="-26" width="56" height="44" rx="4" fill="#006fb6" />
+            <rect x="-22" y="-22" width="44" height="10" rx="2" fill="#0c2233" />
+            <text x="0" y="10" text-anchor="middle" fill="#ffffff" font-family="Public Sans, sans-serif" font-size="16" font-weight="800">5</text>
+          </g>
+
+          <!-- Untere Beckenrandkante & Ziel-Touchpads (25m Zielanschlag unten) -->
+          <rect
+            x="210"
+            y="976"
+            width="1500"
+            height="22"
+            rx="3"
+            fill="#dce8f2"
+            stroke="#94b2c9"
+            stroke-width="2"
+          />
+          <!-- Touchpads auf allen 5 Bahnen -->
+          <rect x="355" y="968" width="90" height="12" rx="2" fill="#e2b43b" stroke="#0c2233" stroke-width="1.5" />
+          <rect x="635" y="968" width="90" height="12" rx="2" fill="#e2b43b" stroke="#0c2233" stroke-width="1.5" />
+          <rect
+            id="touchpad"
+            x="910"
+            y="966"
+            width="100"
+            height="14"
+            rx="3"
+            fill="#f7c948"
+            stroke="#0c2233"
+            stroke-width="2"
+          />
+          <rect x="1195" y="968" width="90" height="12" rx="2" fill="#e2b43b" stroke="#0c2233" stroke-width="1.5" />
+          <rect x="1475" y="968" width="90" height="12" rx="2" fill="#e2b43b" stroke="#0c2233" stroke-width="1.5" />
+
+          <!-- Zielanschlag-Wellenringe unten an Bahn 3 -->
+          <g id="finish-ripples" transform="translate(960, 964)" opacity="0">
+            <circle cx="0" cy="0" r="24" fill="none" stroke="#7ce0ff" stroke-width="3.5" />
+            <circle
+              cx="0"
+              cy="0"
+              r="48"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="2.2"
+              stroke-dasharray="10 6"
+            />
+          <!-- 5-Meter-Marke (Eintauch-Splash) -->
+        </g>
+
+        <!-- 5. Eintauch-Splash & Wellenringe (Phase 2: Kopfsprung in Bahn 3) -->
+        <g id="dive-splash" transform="translate(960, 235)" opacity="0">
+          <circle cx="0" cy="0" r="32" fill="none" stroke="#ffffff" stroke-width="3" />
+          <circle
+            cx="0"
+            cy="0"
+            r="60"
+            fill="none"
+            stroke="#9be4ff"
+            stroke-width="2"
+            stroke-dasharray="12 8"
+          />
+          <circle cx="-26" cy="-18" r="7" fill="#ffffff" opacity="0.85" />
+          <circle cx="30" cy="-10" r="5" fill="#9be4ff" opacity="0.8" />
+          <circle cx="-18" cy="24" r="9" fill="none" stroke="#ffffff" stroke-width="2" />
+          <circle cx="24" cy="28" r="6" fill="#ffffff" opacity="0.9" />
+        </g>
+
+        <!-- 6. Der Schwimmer aus der Vogelperspektive (schwimmt von oben nach unten in Bahn 3) -->
+        <!-- Lokales Koordinatensystem: +Y zeigt nach UNTEN (Schwimmrichtung), 0/0 ist Körpermitte -->
+        <g id="swimmer-rig" transform="translate(960, 78)">
+          <!-- Unterwasser-Schatten auf dem Beckenboden (verschiebt sich je nach Tauchtiefe) -->
+          <ellipse
+            id="swimmer-shadow"
+            cx="28"
+            cy="10"
+            rx="34"
+            ry="115"
+            fill="#031321"
+            opacity="0.22"
+            filter="url(#swimmer-shadow-blur)"
+          />
+
+          <!-- V-förmige Bugwelle & Schaumspur hinter dem Schwimmer -->
+          <g id="swimmer-wake" opacity="0">
+            <path
+              d="M 0,88 C -36,40 -58,-45 -76,-165"
+              fill="none"
+              stroke="#b8ebff"
+              stroke-width="2.5"
+              stroke-dasharray="18 10"
+              opacity="0.75"
+            />
+            <path
+              d="M 0,88 C 36,40 58,-45 76,-165"
+              fill="none"
+              stroke="#b8ebff"
+              stroke-width="2.5"
+              stroke-dasharray="18 10"
+              opacity="0.75"
+            />
+            <!-- Sprudelnde Gischt / Bläschen hinter den Füßen -->
+            <circle cx="-14" cy="-145" r="8" fill="#ffffff" opacity="0.75" />
+            <circle cx="16" cy="-160" r="11" fill="none" stroke="#d4f2ff" stroke-width="2" />
+            <circle cx="-6" cy="-185" r="6" fill="#9be4ff" opacity="0.8" />
+            <circle cx="10" cy="-210" r="14" fill="none" stroke="#85d7ff" stroke-width="1.8" stroke-dasharray="8 6" />
+            <circle cx="-18" cy="-230" r="5" fill="#ffffff" opacity="0.65" />
+          </g>
+
+          <g id="swimmer-body">
+            <!-- Linkes Bein (zeigt nach oben / hinten, -Y) -->
+            <g id="leg-left" transform="translate(-14, -44)">
+              <polygon points="-9,0 9,0 7,-56 -7,-56" fill="#d38e63" />
+              <polygon points="-7,-54 7,-54 5,-106 -5,-106" fill="#efb48b" />
+              <polygon points="-5,-104 5,-104 8,-132 -8,-132" fill="#d9986d" />
+            </g>
+
+            <!-- Rechtes Bein (zeigt nach oben / hinten, -Y) -->
+            <g id="leg-right" transform="translate(14, -44)">
+              <polygon points="-9,0 9,0 7,-56 -7,-56" fill="#b87952" />
+              <polygon points="-7,-54 7,-54 5,-106 -5,-106" fill="#d38e63" />
+              <polygon points="-5,-104 5,-104 8,-132 -8,-132" fill="#b87952" />
+            </g>
+
+            <!-- Linker Arm (Schultergelenk bei -28, 34; ausgestreckt nach vorn/unten +Y) -->
+            <g id="arm-left" transform="translate(-28, 34)">
+              <circle cx="0" cy="0" r="11" fill="#e5a479" />
+              <polygon points="-8,0 8,0 11,54 -5,54" fill="#e5a479" />
+              <g id="forearm-left" transform="translate(3, 52)">
+                <polygon points="-7,0 7,0 5,56 -4,56" fill="#f4be96" />
+                <!-- Handfläche -->
+                <polygon points="-5,54 6,54 8,72 -6,72" fill="#fbd4b7" />
+                <!-- Wasser-Ripple an der linken Hand -->
+                <circle
+                  id="vortex-left"
+                  cx="1"
+                  cy="66"
+                  r="16"
+                  fill="none"
+                  stroke="#d8f3ff"
+                  stroke-width="2"
+                  opacity="0.8"
+                />
+              </g>
+            </g>
+
+            <!-- Rechter Arm (Schultergelenk bei +28, 34; ausgestreckt nach vorn/unten +Y) -->
+            <g id="arm-right" transform="translate(28, 34)">
+              <circle cx="0" cy="0" r="11" fill="#d38e63" />
+              <polygon points="-8,0 8,0 5,54 -11,54" fill="#d38e63" />
+              <g id="forearm-right" transform="translate(-3, 52)">
+                <polygon points="-7,0 7,0 4,56 -5,56" fill="#efb48b" />
+                <!-- Handfläche -->
+                <polygon points="-6,54 5,54 6,72 -8,72" fill="#fbd4b7" />
+                <!-- Wasser-Ripple an der rechten Hand -->
+                <circle
+                  id="vortex-right"
+                  cx="-1"
+                  cy="66"
+                  r="16"
+                  fill="none"
+                  stroke="#d8f3ff"
+                  stroke-width="2"
+                  opacity="0.8"
+                />
+              </g>
+            </g>
+
+            <!-- Torso / V-förmiger Rücken & Renn-Schwimmanzug von oben -->
+            <g id="torso">
+              <!-- Breiter Schultergürtel und oberer Rücken -->
+              <polygon
+                points="-34,38 34,38 24,-6 -24,-6"
+                fill="#efb48b"
+              />
+              <!-- Wirbelsäulen-Schattierung -->
+              <line x1="0" y1="34" x2="0" y2="-4" stroke="#c98459" stroke-width="2.5" opacity="0.75" />
+              <!-- Renn-Schwimmanzug (Hüfte & unterer Rücken) -->
+              <polygon
+                points="-24,-5 24,-5 19,-48 -19,-48"
+                fill="url(#suit-grad-top)"
+              />
+              <!-- Türkisblauer Design-Streifen auf dem Anzug -->
+              <path
+                d="M -21,-12 L 0,-4 L 21,-12"
+                fill="none"
+                stroke="#5ce1ff"
+                stroke-width="3.5"
+              />
+              <line x1="-18" y1="-34" x2="18" y2="-34" stroke="#032946" stroke-width="4" />
+            </g>
+
+            <!-- Kopf von oben (mit blauer Schwimmkappe & Brille in Schwimmrichtung +Y) -->
+            <g id="head" transform="translate(0, 58)">
+              <ellipse cx="0" cy="0" rx="17" ry="21" fill="#d99469" />
+              <!-- Zweifarbige Profi-Schwimmkappe -->
+              <ellipse cx="0" cy="-2" rx="16.5" ry="18.5" fill="#006fb6" />
+              <path d="M -14,4 Q 0,18 14,4 Q 0,-4 -14,4 Z" fill="#4ad4ff" />
+              <!-- Schwimmbrille an der Vorderseite (+Y) -->
+              <rect x="-12" y="13" width="10" height="5" rx="2" fill="#ffffff" stroke="#0a253b" stroke-width="2" />
+              <rect x="2" y="13" width="10" height="5" rx="2" fill="#ffffff" stroke="#0a253b" stroke-width="2" />
+            </g>
+          </g>
+        </g>
+
+        <!-- 7. Technische Vermessungs-Markierungen (Meter-Skala am Beckenrand) -->
+        <g class="hud-markers" opacity="0.8">
+          <g fill="#557994" font-family="Public Sans, sans-serif" font-size="13" font-weight="700">
+            <text x="172" y="114" text-anchor="end">0 m</text>
+            <text x="172" y="285" text-anchor="end">5 m</text>
+            <text x="172" y="540" text-anchor="end">12,5 m</text>
+            <text x="172" y="795" text-anchor="end">20 m</text>
+            <text x="172" y="975" text-anchor="end">25 m</text>
+          </g>
+          <!-- 5m-Wende-Fähnchenleine (Backstroke Flags) quer über das Becken oben und unten -->
+          <g id="backstroke-flags-top" opacity="0.85">
+            <line x1="210" y1="265" x2="1710" y2="265" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6" />
+            <polygon points="390,265 400,283 410,265" fill="#006fb6" />
+            <polygon points="670,265 680,283 690,265" fill="#e03e3e" />
+            <polygon points="950,265 960,283 970,265" fill="#006fb6" />
+            <polygon points="1230,265 1240,283 1250,265" fill="#e03e3e" />
+            <polygon points="1510,265 1520,283 1530,265" fill="#006fb6" />
+          </g>
+          <g id="backstroke-flags-bottom" opacity="0.85">
+            <line x1="210" y1="815" x2="1710" y2="815" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6" />
+            <polygon points="390,815 400,797 410,815" fill="#006fb6" />
+            <polygon points="670,815 680,797 690,815" fill="#e03e3e" />
+            <polygon points="950,815 960,797 970,815" fill="#006fb6" />
+            <polygon points="1230,815 1240,797 1250,815" fill="#e03e3e" />
+            <polygon points="1510,815 1520,797 1530,815" fill="#006fb6" />
+          </g>
+        </g>
+      </svg>
+
+      <!-- Dezente Bahn-Fortschrittsanzeige unten rechts -->
+      <div class="swim-hud" aria-hidden="true">
+        <span class="swim-hud-phase" id="hud-phase-label">Startblock Bahn 3 · Bereit</span>
+        <div class="swim-hud-track">
+          <span class="swim-hud-bar" id="hud-progress-bar"></span>
+        </div>
+        <span class="swim-hud-distance" id="hud-distance-label">0 m / 25 m</span>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="#start" aria-label="Zum Seitenanfang">
+        <img
+          src="./Seckenheim/Marketing/Sportbad-Mannheim-Wellen/SVG/Sportbad-Mannheim-wellen-lockup.svg"
+          alt="Sportbad Mannheim Logo"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';"
+        />
+        <span class="brand-fallback" style="display: none">Sportbad Mannheim</span>
+      </a>
+      <nav aria-label="Hauptnavigation">
+        <ul>
+          <li><a href="#lage">Lage</a></li>
+          <li><a href="#plan">Plan</a></li>
+          <li><a href="#finanzierung">Finanzierung</a></li>
+          <li><a href="#verein">Verein</a></li>
+          <li><a href="#unterstuetzung">Unterstützung</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="start">
+      <section class="hero section" data-phase="Startblock Bahn 3 · Absprungbereit" data-meters="0">
+        <p class="hero-meta">Hallenbad Seckenheim · Projektstand 2026</p>
+        <h1>Wir sichern Wasserzeiten für Mannheim – dauerhaft, gemeinnützig und finanzierbar.</h1>
+        <p>
+          Das Hallenbad Seckenheim ist seit dem 31. August 2026 geschlossen. Der gemeinnützige
+          Verein <strong>Sportbad Mannheim</strong> will den Standort übernehmen und wieder öffnen –
+          mit einem belastbaren Betriebsmodell statt dauerhafter Zuschüsse.
+        </p>
+        <ul class="hero-facts" aria-label="Projektkennzahlen">
+          <li>
+            <strong data-counter="50000" data-suffix="+" data-format="de">50.000+</strong>
+            <span>Besuche pro Jahr zuletzt</span>
+          </li>
+          <li>
+            <strong data-counter="5" data-suffix=" Bahnen">5 Bahnen</strong>
+            <span>auf 25 m Wasserfläche</span>
+          </li>
+          <li>
+            <strong>01.02.2027</strong>
+            <span>Ziel: Wiederinbetriebnahme Welle 1</span>
+          </li>
+        </ul>
+        <a class="cta" href="#finanzierung">Finanzierungsplan ansehen</a>
+      </section>
+
+      <section id="lage" class="section" data-phase="Kopfsprung · Eintauchen bei 5 m" data-meters="5">
+        <h2>Warum dieses Projekt jetzt zählt</h2>
+        <div class="grid grid-3">
+          <article>
+            <h3>Wasserflächen werden knapper</h3>
+            <p>
+              Mit der Schließung in Seckenheim und weiteren Engpässen in der Region fehlen
+              Trainings- und Lernzeiten für Schulen, Vereine und Familien.
+            </p>
+          </article>
+          <article>
+            <h3>Nachfrage ist real</h3>
+            <p>
+              Laut One-Pager und Statusfolien gibt es bereits konkrete Nachfrage und zugesagte
+              Bahnenstunden von Vereinen, Schwimmschulen und weiteren Nutzern.
+            </p>
+          </article>
+          <article>
+            <h3>Gesellschaftlicher Nutzen</h3>
+            <p>
+              Mehr Wasserzeiten bedeuten mehr Schwimmkurse, mehr Sicherheit im Wasser und bessere
+              Gesundheitsangebote im Stadtteil.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="plan" class="section" data-phase="Unterwasser-Gleitphase · Dolphin-Kick" data-meters="11">
+        <h2>Der Umsetzungsplan: Startsicher, dann Ausbau</h2>
+        <div class="grid grid-2">
+          <article class="phase">
+            <h3>Welle 1 · Betriebsstart</h3>
+            <p>
+              Vereine, Schulen und Schwimmschulen mieten feste Wasserzeiten mit eigener Aufsicht.
+              Das Modell ist bekannt, steuerbar und ab Tag 1 tragfähig.
+            </p>
+            <p class="meta">Zeitfenster: bis Anfang Februar 2027</p>
+          </article>
+          <article class="phase">
+            <h3>Welle 2 · Öffnung im Halbjahr</h3>
+            <p>
+              Bahnenschwimmen und Wochenendzeiten für Einzelschwimmer kommen kontrolliert hinzu.
+              Der Verein organisiert dafür die Aufsicht und das Buchungsmodell.
+            </p>
+            <p class="meta">Zeitfenster: erstes Halbjahr nach Wiedereröffnung</p>
+          </article>
+        </div>
+        <div class="timeline">
+          <h3>Meilensteine bis zum Start</h3>
+          <ul>
+            <li>Vereinsgründung, Satzung, Verträge und Sponsoring bis Anfang Dezember 2026</li>
+            <li>Instandsetzung im Dezember/Januar mit klar priorisierten Maßnahmen</li>
+            <li>Wiederinbetriebnahme als verlässlicher Schwimmstandort ab Anfang 2027</li>
+          </ul>
+        </div>
+        <p class="plan-note">
+          Leitprinzip aus den Präsentationen: Investitionen erfolgen stufenweise nach Cashflow – nur
+          was gedeckt ist, wird umgesetzt.
+        </p>
+      </section>
+
+      <section
+        id="finanzierung"
+        class="section finance"
+        data-phase="Auftauchen · Übergang Kraulzug"
+        data-meters="17"
+      >
+        <h2>Finanzierung mit klarer Mittelverwendung</h2>
+        <p>
+          Der Finanzrahmen basiert auf belegten Betriebsdaten 2025 und konservativen Annahmen zur
+          Auslastung. Damit ist transparent, wofür Mittel gebraucht werden und wie sie wirken.
+        </p>
+        <div class="grid grid-3 finance-grid">
+          <article>
+            <h3>Belegte Basis</h3>
+            <p>
+              <strong data-counter="245000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~245.000 €</strong
+              >
+              laufende Jahreskosten
+            </p>
+            <p>
+              <strong data-counter="50000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~50.000 €</strong
+              >
+              Wiederinbetriebnahme (einmalig)
+            </p>
+            <p>
+              <strong data-counter="300000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~300.000 €</strong
+              >
+              Zielbudget Jahr 1
+            </p>
+          </article>
+          <article>
+            <h3>Heute abgesichert</h3>
+            <p>
+              <strong data-counter="200000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~200.000 €</strong
+              >
+              aus bestehenden Zusagen
+            </p>
+            <p>
+              <strong data-counter="152" data-suffix=" h/Woche">152 h/Woche</strong> zugesagte
+              Bahnenzeiten
+            </p>
+            <p>
+              <strong data-counter="204000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~204.000 €</strong
+              >
+              erwartete Erlöse inkl. Schulen-Upside
+            </p>
+          </article>
+          <article>
+            <h3>Jetzt zu schließen</h3>
+            <p>
+              <strong data-counter="100000" data-prefix="~" data-suffix=" €" data-format="de"
+                >~100.000 €</strong
+              >
+              offene Startfinanzierung
+            </p>
+            <p><strong>~40–50 T€</strong> operative Lücke je nach Rücklage</p>
+            <p>Deckung über Spenden, Sponsoring, zusätzliche Belegung und Kurse</p>
+          </article>
+        </div>
+        <div
+          class="funding-bar"
+          role="img"
+          aria-label="Finanzierungsstand: rund zwei Drittel gesichert"
+        >
+          <span class="funding-secured" data-target-width="67%" style="width: 67%"></span>
+        </div>
+        <p class="funding-legend">
+          Finanzierungsstand Erstjahr: ca.
+          <strong class="funding-percent" data-counter="67" data-suffix=" %">67 %</strong>
+          gesichert · ca. 33 % offen
+        </p>
+      </section>
+
+      <section id="verein" class="section" data-phase="Kraul-Sprint · 20 m Marke" data-meters="21">
+        <h2>Verein und Teamstruktur</h2>
+        <p>
+          Die Aufgaben sind im Organigramm bereits klar gegliedert: Vorstand, Kassenprüfung und
+          operative Ressorts für Technik, Mitglieder/Belegung, Marketing/Sponsoring, Recht/Compliance
+          sowie IT.
+        </p>
+        <div class="grid grid-2 structure">
+          <article>
+            <h3>Geschäftsführender Vorstand</h3>
+            <ul>
+              <li>1. Vorsitz (Kooperationen, Förderung)</li>
+              <li>2. Vorsitz</li>
+              <li>Schatzmeisterei (Finanzen, Steuerung)</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Fachteams</h3>
+            <ul>
+              <li>Technik, Anlagen &amp; Bau</li>
+              <li>Energie &amp; Nachhaltigkeit</li>
+              <li>Mitglieder, Belegung &amp; Preismodelle</li>
+              <li>Marketing, Sponsoring, Recht, IT</li>
+            </ul>
+          </article>
+        </div>
+        <h3>Mitglieder (Platzhalter für Portraits)</h3>
+        <div class="members" aria-label="Mitglieder mit Platzhalterbildern">
+          <article class="member-card">
+            <div class="avatar" aria-hidden="true"></div>
+            <h4>Name folgt</h4>
+            <p>1. Vorsitz · Kooperationen &amp; Förderung</p>
+          </article>
+          <article class="member-card">
+            <div class="avatar" aria-hidden="true"></div>
+            <h4>Name folgt</h4>
+            <p>2. Vorsitz · Organisation &amp; Betrieb</p>
+          </article>
+          <article class="member-card">
+            <div class="avatar" aria-hidden="true"></div>
+            <h4>Name folgt</h4>
+            <p>Schatzmeisterei · Finanzen &amp; Controlling</p>
+          </article>
+          <article class="member-card">
+            <div class="avatar" aria-hidden="true"></div>
+            <h4>Name folgt</h4>
+            <p>Ressortleitung · Technik &amp; Instandhaltung</p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        id="unterstuetzung"
+        class="section support"
+        data-phase="Zielanschlag unten · 25 m erreicht"
+        data-meters="25"
+      >
+        <h2>Unterstützen, damit der Start gelingt</h2>
+        <p>
+          Wir wollen das erste Betriebsjahr nur dann starten, wenn es vollständig durchfinanziert ist.
+          So schützen wir den Verein, die Spender und den Standort vor einem Fehlstart.
+        </p>
+        <div class="grid grid-2">
+          <article>
+            <h3>Wofür Spenden direkt eingesetzt werden</h3>
+            <ul>
+              <li>technische Startmaßnahmen (z. B. Chlorwarnanlage, Dach, Duschen)</li>
+              <li>Betriebsbereitschaft bis zur Wiedereröffnung</li>
+              <li>Rücklage für stabilen Betrieb ohne Dauersubvention</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Vertrauen durch klare Regeln</h3>
+            <p>
+              Laut One-Pager: Wird das Finanzierungsziel nicht erreicht, werden Spenden gemäß
+              kommuniziertem Verfahren zurückgeführt bzw. gemeinnützig weitergegeben.
+            </p>
+          </article>
+        </div>
+        <p class="notice">
+          Spendenkonto, Sponsoringpakete und verbindliche Ansprechpartner ergänzen wir als nächsten
+          Schritt.
+        </p>
+        <a class="cta" href="mailto:kontakt@sportbad-mannheim.de">Spenden und Sponsoring anfragen</a>
+      </section>
+    </main>
+
+    <!-- GSAP 3 & ScrollTrigger via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <script>
+      (() => {
+        const header = document.querySelector(".topbar");
+        const setHeaderOffset = () => {
+          if (!header) return;
+          const offset = Math.ceil(header.getBoundingClientRect().height);
+          document.documentElement.style.setProperty("--header-offset", `${offset}px`);
+        };
+
+        setHeaderOffset();
+        window.addEventListener("resize", setHeaderOffset);
+        window.addEventListener("load", setHeaderOffset);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(setHeaderOffset);
+        }
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined" || prefersReducedMotion) {
+          document.documentElement.classList.add("reduced-motion");
+          return;
+        }
+
+        gsap.registerPlugin(ScrollTrigger);
+        document.documentElement.classList.add("js-scrollytelling");
+
+        const formatNumber = (val, useDeFormat) => {
+          const rounded = Math.round(val);
+          return useDeFormat ? rounded.toLocaleString("de-DE") : String(rounded);
+        };
+
+        // Zahlen-Counter und Finanzierungsbalken innerhalb einer Sektion animieren
+        const animateSectionMetrics = (section) => {
+          if (section.dataset.metricsAnimated === "true") return;
+          section.dataset.metricsAnimated = "true";
+
+          const counters = section.querySelectorAll("[data-counter]");
+          counters.forEach((el) => {
+            const target = parseFloat(el.dataset.counter || "0");
+            const prefix = el.dataset.prefix || "";
+            const suffix = el.dataset.suffix || "";
+            const useDe = el.dataset.format === "de";
+            const state = { val: 0 };
+
+            gsap.to(state, {
+              val: target,
+              duration: 1.35,
+              ease: "power2.out",
+              onUpdate: () => {
+                el.textContent = `${prefix}${formatNumber(state.val, useDe)}${suffix}`;
+              },
+            });
+          });
+
+          const fundingBar = section.querySelector(".funding-secured");
+          if (fundingBar) {
+            const targetWidth = fundingBar.dataset.targetWidth || "67%";
+            gsap.fromTo(
+              fundingBar,
+              { width: "0%" },
+              { width: targetWidth, duration: 1.5, ease: "power3.out" }
+            );
+          }
+        };
+
+        // ==========================================================================
+        // 1. Zuerst Section Pinning aufbauen (damit die echte Gesamtlänge inkl. Pin-Spacern feststeht)
+        // ==========================================================================
+        const sections = gsap.utils.toArray(".section");
+        const navLinks = gsap.utils.toArray("nav a");
+        const sectionScrollTriggers = new Map();
+        const hudPhase = document.getElementById("hud-phase-label");
+        const hudDistance = document.getElementById("hud-distance-label");
+        const hudBar = document.getElementById("hud-progress-bar");
+
+        const updateActiveNavAndHud = (section) => {
+          const id = section.getAttribute("id") || "start";
+          const phaseText = section.dataset.phase || "";
+          if (hudPhase && phaseText) {
+            hudPhase.textContent = phaseText;
+          }
+          navLinks.forEach((link) => {
+            const isMatch = link.getAttribute("href") === `#${id}`;
+            link.classList.toggle("is-active", isMatch);
+            if (isMatch) {
+              link.setAttribute("aria-current", "true");
+            } else {
+              link.removeAttribute("aria-current");
+            }
+          });
+        };
+
+        const mm = gsap.matchMedia();
+
+        // Desktop & größere Tablets: Echtes Viewport-Pinning im Apple-Stil
+        // Startet tiefer im Viewport (top top+=210), sodass der obere Beckenrand & Startblock frei sichtbar bleiben
+        mm.add("(min-width: 768px) and (min-height: 620px)", () => {
+          sections.forEach((section, index) => {
+            const isFirst = index === 0;
+            const isLast = index === sections.length - 1;
+            const innerItems = section.querySelectorAll(
+              "h1, h2, .hero-meta, .hero-facts li, .grid > article, .timeline, .plan-note, .funding-bar, .funding-legend, .members > article, .notice, .cta"
+            );
+
+            const tl = gsap.timeline({
+              scrollTrigger: {
+                trigger: section,
+                start: "top top+=210",
+                end: "+=130%",
+                pin: true,
+                pinSpacing: true,
+                scrub: 1,
+                anticipatePin: 1,
+                onEnter: () => {
+                  updateActiveNavAndHud(section);
+                  animateSectionMetrics(section);
+                },
+                onEnterBack: () => {
+                  updateActiveNavAndHud(section);
+                },
+              },
+            });
+
+            sectionScrollTriggers.set(section.id || "start", tl.scrollTrigger);
+
+            if (isFirst) {
+              animateSectionMetrics(section);
+              updateActiveNavAndHud(section);
+              tl.to(section, { autoAlpha: 1, y: 0, scale: 1, duration: 0.6 }).to(section, {
+                autoAlpha: 0,
+                y: -56,
+                scale: 0.96,
+                duration: 0.4,
+                ease: "power2.in",
+              });
+            } else if (isLast) {
+              gsap.set(section, { autoAlpha: 0, y: 64, scale: 0.96 });
+              tl.to(section, {
+                autoAlpha: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.45,
+                ease: "power2.out",
+              })
+                .fromTo(
+                  innerItems,
+                  { y: 20, autoAlpha: 0 },
+                  { y: 0, autoAlpha: 1, stagger: 0.04, duration: 0.35, ease: "power2.out" },
+                  "<0.05"
+                )
+                .to(section, { autoAlpha: 1, y: 0, duration: 0.55 });
+            } else {
+              gsap.set(section, { autoAlpha: 0, y: 64, scale: 0.96 });
+              tl.to(section, {
+                autoAlpha: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.3,
+                ease: "power2.out",
+              })
+                .fromTo(
+                  innerItems,
+                  { y: 20, autoAlpha: 0 },
+                  { y: 0, autoAlpha: 1, stagger: 0.035, duration: 0.28, ease: "power2.out" },
+                  "<0.04"
+                )
+                .to(section, {
+                  autoAlpha: 1,
+                  y: 0,
+                  scale: 1,
+                  duration: 0.42,
+                })
+                .to(section, {
+                  autoAlpha: 0,
+                  y: -56,
+                  scale: 0.96,
+                  duration: 0.28,
+                  ease: "power2.in",
+                });
+            }
+          });
+
+          return () => {
+            sectionScrollTriggers.clear();
+          };
+        });
+
+        // Mobile / kompakte Viewports
+        mm.add("(max-width: 767px), (max-height: 619px)", () => {
+          sections.forEach((section, index) => {
+            if (index === 0) {
+              animateSectionMetrics(section);
+              updateActiveNavAndHud(section);
+            }
+
+            gsap.fromTo(
+              section,
+              { autoAlpha: index === 0 ? 1 : 0.15, y: index === 0 ? 0 : 40 },
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: 0.6,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: section,
+                  start: "top 82%",
+                  end: "bottom 25%",
+                  toggleActions: "play none none reverse",
+                  onEnter: () => {
+                    updateActiveNavAndHud(section);
+                    animateSectionMetrics(section);
+                  },
+                  onEnterBack: () => updateActiveNavAndHud(section),
+                },
+              }
+            );
+          });
+        });
+
+        // ==========================================================================
+        // 2. Top-Down Schwimmer-Choreografie (synchronisiert über den gesamten Dokument-Scroll)
+        // ==========================================================================
+        // Initiale Pose auf dem Startblock Bahn 3 (oben bei y = 78, gebückt in Startposition)
+        gsap.set("#swimmer-rig", {
+          x: 960,
+          y: 78,
+          rotation: 0,
+          scaleX: 0.92,
+          scaleY: 0.62,
+          transformOrigin: "50% 50%",
+        });
+        // Arme greifen an die Startblock-Vorderkante, Beine angewinkelt
+        gsap.set("#arm-left", { rotation: -22, transformOrigin: "0px 0px" });
+        gsap.set("#forearm-left", { rotation: 28, transformOrigin: "0px 0px" });
+        gsap.set("#arm-right", { rotation: 22, transformOrigin: "0px 0px" });
+        gsap.set("#forearm-right", { rotation: -28, transformOrigin: "0px 0px" });
+        gsap.set("#leg-left", { scaleY: 0.55, x: -14, transformOrigin: "0px 0px" });
+        gsap.set("#leg-right", { scaleY: 0.45, x: 14, transformOrigin: "0px 0px" });
+        gsap.set("#vortex-left, #vortex-right", { autoAlpha: 0 });
+        gsap.set("#swimmer-wake", { autoAlpha: 0 });
+        gsap.set("#swimmer-shadow", { attr: { cx: 14, cy: 10, rx: 28, ry: 75 }, opacity: 0.18 });
+
+        // Da das Section-Pinning oberhalb bereits initialisiert wurde, nutzt end: "max"
+        // jetzt die echte gesamte Scroll-Strecke inkl. aller gepinnten Story-Cards.
+        const masterSwimTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: document.documentElement,
+            start: 0,
+            end: "max",
+            scrub: 1.2,
+            onUpdate: (self) => {
+              const meters = Math.round(self.progress * 25);
+              if (hudDistance) hudDistance.textContent = `${meters} m / 25 m`;
+              if (hudBar) hudBar.style.width = `${(self.progress * 100).toFixed(1)}%`;
+            },
+          },
+        });
+
+        // PHASE 0 (0.0 -> 0.5): Während Hero-Card noch gelesen wird, bleibt der Schwimmer am Startblock und geht leicht in Spannung
+        masterSwimTl.to(
+          "#swimmer-rig",
+          {
+            x: 960,
+            y: 86,
+            scaleX: 0.9,
+            scaleY: 0.68,
+            ease: "sine.inOut",
+            duration: 0.5,
+          },
+          0
+        );
+
+        // PHASE 1 -> 2 (0.5 -> 1.5, Hero zu Lage): Kraftvoller Absprung nach unten & Eintauchen bei der 5m-Linie (y = 265)
+        masterSwimTl
+          .to(
+            "#swimmer-rig",
+            {
+              x: 960,
+              y: 265,
+              scaleX: 0.88,
+              scaleY: 1.08, // Körper streckt sich im Flug vollständig
+              ease: "power2.inOut",
+              duration: 1,
+            },
+            0.5
+          )
+          // Arme legen sich zur Pfeilform (Streamline) über den Kopf zusammen
+          .to("#arm-left", { rotation: -16, duration: 0.5 }, 0.5)
+          .to("#forearm-left", { rotation: -12, duration: 0.5 }, 0.5)
+          .to("#arm-right", { rotation: 16, duration: 0.5 }, 0.5)
+          .to("#forearm-right", { rotation: 12, duration: 0.5 }, 0.5)
+          .to("#leg-left, #leg-right", { scaleY: 1, duration: 0.55 }, 0.5)
+          // Eintauch-Splash bei y = 235
+          .fromTo(
+            "#dive-splash",
+            { autoAlpha: 0, scale: 0.3, transformOrigin: "50% 50%" },
+            { autoAlpha: 0.95, scale: 1.45, duration: 0.45, ease: "power2.out" },
+            0.85
+          )
+          .to("#dive-splash", { autoAlpha: 0, scale: 2.1, duration: 0.5 }, 1.25)
+          // Unterwasser-Effekt: Schatten rückt näher an den Körper am Beckenboden
+          .to(
+            "#swimmer-shadow",
+            { attr: { cx: 8, cy: 4, rx: 30, ry: 110 }, opacity: 0.42, duration: 0.6 },
+            0.9
+          )
+          .to("#swimmer-body", { opacity: 0.82, duration: 0.4 }, 1.0);
+
+        // PHASE 2 -> 3 (1.5 -> 2.5, Lage zu Plan): Tiefe Gleitphase (Streamline) & Dolphin-Kick bis zur Beckenmitte (11-12m, y = 465)
+        masterSwimTl
+          .to(
+            "#swimmer-rig",
+            {
+              x: 960,
+              y: 465,
+              scaleX: 0.84,
+              scaleY: 0.94,
+              ease: "sine.inOut",
+              duration: 1,
+            },
+            1.5
+          )
+          // Delphin-Kick von oben gesehen (rhythmische Streckung und Körperwelle)
+          .to(
+            "#leg-left, #leg-right",
+            {
+              scaleY: 0.78,
+              duration: 0.25,
+              yoyo: true,
+              repeat: 3,
+              ease: "sine.inOut",
+            },
+            1.5
+          )
+          .to(
+            "#torso",
+            {
+              scaleY: 1.05,
+              duration: 0.25,
+              yoyo: true,
+              repeat: 3,
+              ease: "sine.inOut",
+            },
+            1.5
+          );
+
+        // PHASE 3 -> 4 (2.5 -> 3.5, Plan zu Finanzierung): Auftauchen zur Wasseroberfläche & Übergang in den Kraulzug (17m, y = 650)
+        masterSwimTl
+          .to(
+            "#swimmer-rig",
+            {
+              x: 960,
+              y: 650,
+              scaleX: 1,
+              scaleY: 1,
+              rotation: 4, // Leichte Körperrotation beim ersten Kraulzug
+              ease: "sine.inOut",
+              duration: 1,
+            },
+            2.5
+          )
+          .to("#swimmer-body", { opacity: 1, duration: 0.4 }, 2.6)
+          .to(
+            "#swimmer-shadow",
+            { attr: { cx: 34, cy: 14, rx: 34, ry: 118 }, opacity: 0.24, duration: 0.6 },
+            2.6
+          )
+          .to("#swimmer-wake", { autoAlpha: 0.95, duration: 0.45 }, 2.7)
+          .to("#vortex-left, #vortex-right", { autoAlpha: 0.85, duration: 0.4 }, 2.7)
+          // Linker Arm zieht kraftvoll unter dem Körper durch (Pull-Phase), rechter Arm gleitet vorn
+          .to("#arm-left", { rotation: 155, duration: 0.85, ease: "sine.inOut" }, 2.6)
+          .to("#forearm-left", { rotation: 20, duration: 0.85, ease: "sine.inOut" }, 2.6)
+          .to("#arm-right", { rotation: 4, duration: 0.85, ease: "sine.inOut" }, 2.6)
+          .to("#forearm-right", { rotation: 0, duration: 0.85, ease: "sine.inOut" }, 2.6)
+          // Wechselschlag der Beine (Flutter-Kick)
+          .to("#leg-left", { scaleY: 0.82, x: -17, duration: 0.25, yoyo: true, repeat: 3 }, 2.5)
+          .to("#leg-right", { scaleY: 1.04, x: 11, duration: 0.25, yoyo: true, repeat: 3 }, 2.5);
+
+        // PHASE 4 -> 5 (3.5 -> 4.5, Finanzierung zu Verein): Voller Kraul-Sprint an der 20m-Marke vorbei (y = 790)
+        masterSwimTl
+          .to(
+            "#swimmer-rig",
+            {
+              x: 960,
+              y: 790,
+              rotation: -4,
+              ease: "sine.inOut",
+              duration: 1,
+            },
+            3.5
+          )
+          // Wechselzug: Linker Arm schwingt nach vorn (Recovery), rechter Arm zieht durchs Wasser nach hinten
+          .to("#arm-left", { rotation: -6, duration: 0.85, ease: "sine.inOut" }, 3.55)
+          .to("#forearm-left", { rotation: 0, duration: 0.85, ease: "sine.inOut" }, 3.55)
+          .to("#arm-right", { rotation: -155, duration: 0.85, ease: "sine.inOut" }, 3.55)
+          .to("#forearm-right", { rotation: -20, duration: 0.85, ease: "sine.inOut" }, 3.55)
+          // Schneller Kraul-Beinschlag
+          .to("#leg-left", { scaleY: 1.04, x: -11, duration: 0.2, yoyo: true, repeat: 4 }, 3.5)
+          .to("#leg-right", { scaleY: 0.8, x: 17, duration: 0.2, yoyo: true, repeat: 4 }, 3.5);
+
+        // PHASE 5 -> 6 (4.5 -> 5.5, Verein zu Unterstützung / Ende): Zielanschlag unten an der 25m-Touchpad-Wand
+        masterSwimTl
+          .to(
+            "#swimmer-rig",
+            {
+              x: 960,
+              y: 848, // Linke Hand berührt bei y = 848 + 34 + 84 = 966 exakt das gelbe Touchpad
+              rotation: 0,
+              ease: "power2.out",
+              duration: 1,
+            },
+            4.5
+          )
+          // Linker Arm streckt sich lang nach unten zum Zielanschlag ans Touchpad
+          .to("#arm-left", { rotation: -12, duration: 0.6, ease: "power2.out" }, 4.55)
+          .to("#forearm-left", { rotation: -8, duration: 0.6, ease: "power2.out" }, 4.55)
+          .to("#arm-right", { rotation: 28, duration: 0.6, ease: "power2.out" }, 4.55)
+          .to("#swimmer-wake", { autoAlpha: 0.35, duration: 0.4 }, 5.0)
+          .fromTo(
+            "#finish-ripples",
+            { autoAlpha: 0, scale: 0.3, transformOrigin: "50% 50%" },
+            { autoAlpha: 1, scale: 1.65, duration: 0.45, ease: "power2.out" },
+            5.15
+          )
+          .to(
+            "#touchpad",
+            { fill: "#4ad4ff", duration: 0.25, yoyo: true, repeat: 1 },
+            5.15
+          );
+
+        // Dezentes Parallax des Beckenbodens & der Lichtreflexe gegen die Schwimmrichtung
+        gsap.to("#pool-tile-grid", {
+          y: -60,
+          ease: "none",
+          scrollTrigger: {
+            trigger: document.documentElement,
+            start: 0,
+            end: "max",
+            scrub: 1,
+          },
+        });
+
+        gsap.to("#light-rays", {
+          y: -85,
+          ease: "none",
+          scrollTrigger: {
+            trigger: document.documentElement,
+            start: 0,
+            end: "max",
+            scrub: 1.5,
+          },
+        });
+
+        ScrollTrigger.refresh();
+
+        // Präzise Anker-Navigation für gepinnte Sektionen
+        document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+          anchor.addEventListener("click", (event) => {
+            const targetHash = anchor.getAttribute("href");
+            if (!targetHash || targetHash === "#") return;
+            const targetId = targetHash.slice(1);
+            const targetEl = document.getElementById(targetId);
+            if (!targetEl) return;
+
+            event.preventDefault();
+
+            if (targetId === "start") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              history.pushState(null, "", targetHash);
+              return;
+            }
+
+            const st = sectionScrollTriggers.get(targetId);
+            if (st) {
+              const readingSpot = st.start + (st.end - st.start) * 0.45;
+              window.scrollTo({ top: readingSpot, behavior: "smooth" });
+            } else {
+              targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            history.pushState(null, "", targetHash);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

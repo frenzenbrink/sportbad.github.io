@@ -1,0 +1,11 @@
+Sportbad Mannheim (Arbeitstitel) – Wellen-Zeichen mit Wortmarke
+Stand: 23.10.2026
+
+- Wellen-Zeichen: eigene Vektorzeichnung (drei geschwungene Bänder), angelehnt an das Motiv im
+  Key-Visual-Bild, aber neu konstruiert. Einfach, gut in kleinen Größen (Favicon 32/64 px),
+  leicht einfarbig umsetzbar (Stempel, Stick). Hinweis: drei Wellen sind ein sehr verbreitetes
+  Wasser-Symbol – frei nutzbar, allein aber kaum als Marke schützbar.
+- Wortmarke: Inter Display (Bold/Medium), SIL Open Font License 1.1, in Pfade umgewandelt.
+- Key Visual (JPG/Sportbad-Mannheim-KeyVisual.jpg): vom Verein gestelltes Bild mit Wortmarke.
+  Bildherkunft: [eintragen]. Falls KI-generiert: kein eigenes Urheberrecht am Bild.
+- Farben: Navy #0A2E5C · Blau #026CB4 · Wellen-Verlauf #1FA9E6 → #0A5CA8 · hell #E8F7FF → #8FD0F2
